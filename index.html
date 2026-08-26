@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Quiz Master - Tạo bài tập tự động</title>
+    <title>AI Quiz Master - Tạo bài tập tự động & Kéo thả</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
@@ -17,6 +17,7 @@
               brand: {
                 50: "#f0f7ff",
                 100: "#e0effe",
+                200: "#bae0fd",
                 500: "#3b82f6",
                 600: "#2563eb",
                 700: "#1d4ed8",
@@ -28,13 +29,26 @@
     </script>
     <style>
       .glass-panel {
-        background: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(229, 231, 235, 0.8);
       }
+      /* Custom styling for drag and drop dropzones */
+      .drop-slot.drag-over {
+        border-color: #2563eb !important;
+        background-color: #eff6ff !important;
+        transform: scale(1.02);
+      }
+      .drag-chip.selected-chip {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      }
     </style>
   </head>
-  <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+  <body
+    class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white"
+  >
     <!-- Header Navigation -->
     <header class="sticky top-0 z-50 glass-panel border-b border-slate-200">
       <div
@@ -49,7 +63,7 @@
           <div>
             <h1 class="font-bold text-lg leading-tight">QuizMaker AI</h1>
             <p class="text-xs text-slate-500">
-              Tạo bài tập thông minh từ văn bản
+              Tạo bài tập thông minh & Kéo thả tương tác
             </p>
           </div>
         </div>
@@ -78,7 +92,7 @@
       <!-- Left Panel: Input & Control Panel -->
       <section class="lg:col-span-5 flex flex-col gap-4">
         <div
-          class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4"
+          class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4 sticky top-20"
         >
           <div class="flex items-center justify-between">
             <h2 class="font-semibold text-slate-800 flex items-center gap-2">
@@ -90,21 +104,27 @@
 
           <textarea
             id="rawText"
-            rows="10"
+            rows="9"
             placeholder="Dán văn bản, tài liệu, bài giảng hoặc ghi chú của bạn vào đây..."
-            class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition resize-none"
+            class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition resize-none leading-relaxed"
           ></textarea>
 
           <!-- Question Configuration Options -->
-          <div class="space-y-3 pt-2">
-            <label
-              class="text-xs font-bold text-slate-500 uppercase tracking-wider"
-              >Cấu hình loại câu hỏi</label
-            >
+          <div class="space-y-3 pt-1">
+            <div class="flex items-center justify-between">
+              <label
+                class="text-xs font-bold text-slate-500 uppercase tracking-wider"
+                >Cấu hình loại câu hỏi</label
+              >
+              <span
+                class="text-[10px] text-brand-600 font-medium bg-brand-50 px-2 py-0.5 rounded-full"
+                >Đã cập nhật Kéo-Thả</span
+              >
+            </div>
 
             <div class="grid grid-cols-2 gap-2 text-xs">
               <label
-                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition"
               >
                 <input
                   type="checkbox"
@@ -115,7 +135,7 @@
                 <span>1 Đáp án đúng</span>
               </label>
               <label
-                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition"
               >
                 <input
                   type="checkbox"
@@ -126,7 +146,7 @@
                 <span>Nhiều đáp án</span>
               </label>
               <label
-                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition"
               >
                 <input
                   type="checkbox"
@@ -137,7 +157,7 @@
                 <span>Đúng / Sai</span>
               </label>
               <label
-                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition"
               >
                 <input
                   type="checkbox"
@@ -146,6 +166,19 @@
                   class="rounded text-brand-600 focus:ring-brand-500"
                 />
                 <span>Tự luận nhập liệu</span>
+              </label>
+              <!-- NEW DRAG AND DROP QUESTION TYPE -->
+              <label
+                class="col-span-2 flex items-center gap-2 p-2.5 border border-brand-200 bg-brand-50/50 rounded-xl cursor-pointer hover:bg-brand-50 transition font-medium text-brand-900"
+              >
+                <input
+                  type="checkbox"
+                  id="typeDragDrop"
+                  checked
+                  class="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <i data-lucide="move" class="w-4 h-4 text-brand-600"></i>
+                <span>Kéo thả đáp án vào chỗ trống (Drag & Drop)</span>
               </label>
             </div>
           </div>
@@ -163,7 +196,7 @@
       <!-- Right Panel: Generated Quiz Preview / Interactive Test -->
       <section class="lg:col-span-7 flex flex-col gap-4">
         <div
-          class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 min-h-[500px] flex flex-col"
+          class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 min-h-[550px] flex flex-col"
         >
           <div
             class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4"
@@ -192,8 +225,8 @@
             </div>
             <h3 class="font-medium text-slate-700 mb-1">Chưa có bài tập nào</h3>
             <p class="text-xs text-slate-400 max-w-xs">
-              Dán văn bản ở cột bên trái và bấm "Tạo bài tập tự động" để trải
-              nghiệm.
+              Dán văn bản ở cột bên trái, chọn cấu hình câu hỏi và nhấn "Tạo bài
+              tập tự động".
             </p>
           </div>
 
@@ -203,13 +236,13 @@
           <!-- Bottom Action Bar -->
           <div
             id="quizFooter"
-            class="pt-4 border-t border-slate-100 mt-auto hidden flex items-center justify-between"
+            class="pt-4 border-t border-slate-100 mt-auto hidden flex items-center justify-between flex-wrap gap-3"
           >
             <button
               onclick="checkAnswers()"
               class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl shadow-md transition flex items-center gap-2"
             >
-              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Nộp bài & Nộp
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Nộp bài & Xem
               kết quả
             </button>
             <div
@@ -229,6 +262,7 @@
       const rawText = document.getElementById("rawText");
       const charCount = document.getElementById("charCount");
       let generatedQuestions = [];
+      let selectedChip = null; // For mobile/touch click-to-place fallback
 
       // Character Counter
       rawText.addEventListener("input", () => {
@@ -239,14 +273,14 @@
       function generateQuiz() {
         const text = rawText.value.trim();
         if (!text) {
-          alert("Tunz ơi, vui lòng dán đoạn văn bản vào trước nhé!");
+          alert("Vui lòng dán đoạn văn bản vào trước khi tạo câu hỏi!");
           return;
         }
 
         // Split text into meaningful sentences
         const sentences = text
           .split(/(?<=[.?!])\s+/)
-          .filter((s) => s.trim().length > 15);
+          .filter((s) => s.trim().length > 20);
         if (sentences.length === 0) {
           alert("Văn bản quá ngắn để phân tích. Hãy nhập đoạn văn dài hơn!");
           return;
@@ -258,12 +292,14 @@
         const allowMultiple = document.getElementById("typeMultiple").checked;
         const allowTF = document.getElementById("typeTF").checked;
         const allowEssay = document.getElementById("typeEssay").checked;
+        const allowDragDrop = document.getElementById("typeDragDrop").checked;
 
         const enabledTypes = [];
         if (allowSingle) enabledTypes.push("single");
         if (allowMultiple) enabledTypes.push("multiple");
         if (allowTF) enabledTypes.push("tf");
         if (allowEssay) enabledTypes.push("essay");
+        if (allowDragDrop) enabledTypes.push("dragdrop");
 
         if (enabledTypes.length === 0) {
           alert("Vui lòng chọn ít nhất 1 dạng câu hỏi!");
@@ -271,45 +307,44 @@
         }
 
         sentences.forEach((sentence, index) => {
-          const words = sentence.split(/\s+/);
-          if (words.length < 4) return;
+          const words = sentence
+            .split(/\s+/)
+            .map((w) => w.replace(/[.,?!()"]/g, ""))
+            .filter((w) => w.length > 2);
+          if (words.length < 5) return;
 
-          // Pick type sequentially based on user selection
+          // Pick question type sequentially based on user enabled configuration
           const type = enabledTypes[index % enabledTypes.length];
 
-          // Pick a keyword to mask/ask
-          const keyWordIndex = Math.floor(words.length / 2);
-          const targetWord = words[keyWordIndex].replace(/[.,?!]/g, "");
+          const targetWord = words[Math.floor(words.length / 2)];
 
           if (type === "single") {
-            const distractor1 = "khái niệm";
-            const distractor2 = "phương pháp";
-            const distractor3 = "hệ thống";
-
             generatedQuestions.push({
               id: index,
               type: "single",
               question: sentence.replace(targetWord, "______"),
               options: shuffleArray([
                 targetWord,
-                distractor1,
-                distractor2,
-                distractor3,
+                "khái niệm",
+                "phương pháp",
+                "quy trình",
               ]),
               answer: targetWord,
             });
           } else if (type === "multiple") {
+            const word1 = words[0];
+            const word2 = words[Math.floor(words.length / 2)];
             generatedQuestions.push({
               id: index,
               type: "multiple",
-              question: `Những từ nào sau đây xuất hiện hoặc có liên quan tới nội dung: "${sentence.slice(0, 40)}..."?`,
+              question: `Những từ/cụm từ nào sau đây xuất hiện trong đoạn văn?`,
               options: shuffleArray([
-                words[0],
-                words[Math.floor(words.length / 2)],
+                word1,
+                word2,
+                "Sai lệch",
                 "Không liên quan",
-                "Dữ liệu sai",
               ]),
-              answers: [words[0], words[Math.floor(words.length / 2)]],
+              answers: [word1, word2],
             });
           } else if (type === "tf") {
             const isTrue = index % 2 === 0;
@@ -319,15 +354,43 @@
             generatedQuestions.push({
               id: index,
               type: "tf",
-              question: `Đúng hay Sai: "${questionText}"`,
+              question: `Xác định tính Đúng / Sai của nhận định: "${questionText}"`,
               answer: isTrue ? "Đúng" : "Sai",
             });
           } else if (type === "essay") {
             generatedQuestions.push({
               id: index,
               type: "essay",
-              question: `Hãy giải thích hoặc điền từ còn thiếu trong ý sau: "${sentence.replace(targetWord, "......")}"`,
+              question: `Điền từ thích hợp vào chỗ trống để hoàn thành câu: "${sentence.replace(targetWord, "......")}"`,
               answer: targetWord,
+            });
+          } else if (type === "dragdrop") {
+            // Extract 2 target words for blanks
+            const target1 = words[Math.floor(words.length * 0.25)] || words[0];
+            const target2 =
+              words[Math.floor(words.length * 0.75)] || words[words.length - 1];
+
+            let sentenceWithBlanks = sentence.replace(target1, "[BLANK_0]");
+            sentenceWithBlanks = sentenceWithBlanks.replace(
+              target2,
+              "[BLANK_1]",
+            );
+
+            const pool = shuffleArray([
+              target1,
+              target2,
+              "hệ thống",
+              "kết quả",
+            ]);
+
+            generatedQuestions.push({
+              id: index,
+              type: "dragdrop",
+              question:
+                "Kéo thả các từ ở ô bên dưới vào các chỗ trống thích hợp:",
+              sentenceTemplate: sentenceWithBlanks,
+              answers: [target1, target2],
+              pool: pool,
             });
           }
         });
@@ -359,13 +422,20 @@
         generatedQuestions.forEach((q, idx) => {
           const card = document.createElement("div");
           card.className =
-            "p-4 border border-slate-200 rounded-xl bg-slate-50/50 flex flex-col gap-3";
+            "p-4 md:p-5 border border-slate-200 rounded-xl bg-slate-50/50 flex flex-col gap-3";
 
           let badgeText = "";
+          let badgeColor = "bg-brand-100 text-brand-700";
+
           if (q.type === "single") badgeText = "Trắc nghiệm (1 đáp án)";
           if (q.type === "multiple") badgeText = "Trắc nghiệm (Nhiều đáp án)";
           if (q.type === "tf") badgeText = "Đúng / Sai";
           if (q.type === "essay") badgeText = "Tự luận nhập văn bản";
+          if (q.type === "dragdrop") {
+            badgeText = "Kéo thả đáp án";
+            badgeColor =
+              "bg-purple-100 text-purple-700 border border-purple-200";
+          }
 
           let bodyHTML = "";
 
@@ -374,7 +444,7 @@
                         ${q.options
                           .map(
                             (opt) => `
-                            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm">
+                            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm transition">
                                 <input type="radio" name="q_${q.id}" value="${opt}" class="text-brand-600 focus:ring-brand-500">
                                 <span>${opt}</span>
                             </label>
@@ -387,7 +457,7 @@
                         ${q.options
                           .map(
                             (opt) => `
-                            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm">
+                            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm transition">
                                 <input type="checkbox" name="q_${q.id}" value="${opt}" class="rounded text-brand-600 focus:ring-brand-500">
                                 <span>${opt}</span>
                             </label>
@@ -400,7 +470,7 @@
                         ${["Đúng", "Sai"]
                           .map(
                             (opt) => `
-                            <label class="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm font-medium">
+                            <label class="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm font-medium transition">
                                 <input type="radio" name="q_${q.id}" value="${opt}" class="text-brand-600 focus:ring-brand-500">
                                 <span>${opt}</span>
                             </label>
@@ -411,17 +481,66 @@
           } else if (q.type === "essay") {
             bodyHTML = `<div class="mt-1">
                         <textarea name="q_${q.id}" rows="2" placeholder="Nhập câu trả lời của bạn từ bàn phím..." 
-                            class="w-full p-3 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                            class="w-full p-3 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none transition"></textarea>
                     </div>`;
+          } else if (q.type === "dragdrop") {
+            // Replace blanks with interactive drop zones
+            let formattedSentence = q.sentenceTemplate;
+            q.answers.forEach((_, blankIdx) => {
+              const slotHTML = `<span data-qid="${q.id}" data-blank="${blankIdx}" 
+                            class="drop-slot inline-flex items-center justify-center min-w-[100px] min-h-[36px] px-2.5 py-1 my-1 mx-1 border-2 border-dashed border-slate-300 bg-white rounded-lg align-middle transition text-sm font-medium text-brand-700"
+                            ondragover="handleDragOver(event)" 
+                            ondragleave="handleDragLeave(event)" 
+                            ondrop="handleDrop(event)"
+                            onclick="handleSlotClick(event)"></span>`;
+              formattedSentence = formattedSentence.replace(
+                `[BLANK_${blankIdx}]`,
+                slotHTML,
+              );
+            });
+
+            bodyHTML = `
+                        <div class="flex flex-col gap-3 mt-1">
+                            <!-- Sentence with slots -->
+                            <div class="p-3.5 bg-white border border-slate-200 rounded-xl leading-relaxed text-slate-800 text-sm">
+                                ${formattedSentence}
+                            </div>
+                            
+                            <!-- Draggable Pool -->
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-xs font-semibold text-slate-400">Từ chọn sẵn (Kéo hoặc chạm để chọn):</span>
+                                <div id="pool_${q.id}" class="drag-pool flex flex-wrap gap-2 p-3 bg-slate-100/80 border border-slate-200 rounded-xl min-h-[52px]">
+                                    ${q.pool
+                                      .map(
+                                        (word, wIdx) => `
+                                        <span draggable="true" 
+                                            data-qid="${q.id}" 
+                                            data-word="${word}" 
+                                            id="chip_${q.id}_${wIdx}"
+                                            ondragstart="handleDragStart(event)" 
+                                            onclick="handleChipClick(event)"
+                                            class="drag-chip bg-white hover:bg-brand-50 text-slate-700 font-medium text-xs px-3 py-1.5 rounded-lg border border-slate-300 shadow-sm cursor-grab active:cursor-grabbing transition select-none flex items-center gap-1.5">
+                                            <i data-lucide="grip-vertical" class="w-3.5 h-3.5 text-slate-400"></i>
+                                            <span>${word}</span>
+                                        </span>
+                                    `,
+                                      )
+                                      .join("")}
+                                </div>
+                            </div>
+                        </div>
+                    `;
           }
 
           card.innerHTML = `
                     <div class="flex items-start justify-between gap-2">
-                        <span class="text-xs font-semibold text-brand-700 bg-brand-100 px-2 py-0.5 rounded-md">Câu ${idx + 1} • ${badgeText}</span>
+                        <span class="text-xs font-semibold ${badgeColor} px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                            Câu ${idx + 1} • ${badgeText}
+                        </span>
                     </div>
-                    <p class="text-sm font-medium text-slate-800">${q.question}</p>
+                    <p class="text-sm font-medium text-slate-800 leading-normal">${q.question}</p>
                     ${bodyHTML}
-                    <div id="feedback_${q.id}" class="text-xs mt-1 hidden"></div>
+                    <div id="feedback_${q.id}" class="text-xs font-medium mt-1 hidden p-2 rounded-lg"></div>
                 `;
 
           container.appendChild(card);
@@ -430,17 +549,97 @@
         lucide.createIcons();
       }
 
-      // Grading Logic
+      /* --- DRAG & DROP & CLICK HANDLERS --- */
+      let draggedElement = null;
+
+      function handleDragStart(e) {
+        draggedElement = e.currentTarget;
+        e.dataTransfer.setData("text/plain", e.currentTarget.dataset.word);
+        e.dataTransfer.setData("qid", e.currentTarget.dataset.qid);
+      }
+
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add("drag-over");
+      }
+
+      function handleDragLeave(e) {
+        e.currentTarget.classList.remove("drag-over");
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        const slot = e.currentTarget;
+        slot.classList.remove("drag-over");
+
+        if (!draggedElement) return;
+
+        // Ensure chip belongs to the same question card
+        if (slot.dataset.qid !== draggedElement.dataset.qid) return;
+
+        // If slot already has a chip, return it back to pool
+        if (slot.children.length > 0) {
+          const existingChip = slot.children[0];
+          document
+            .getElementById(`pool_${slot.dataset.qid}`)
+            .appendChild(existingChip);
+        }
+
+        slot.appendChild(draggedElement);
+        draggedElement.classList.remove("selected-chip");
+        draggedElement = null;
+        selectedChip = null;
+      }
+
+      // Click Fallback for Mobile/Touch UX
+      function handleChipClick(e) {
+        e.stopPropagation();
+        const chip = e.currentTarget;
+
+        // If chip is inside a slot, move it back to pool
+        if (chip.parentElement.classList.contains("drop-slot")) {
+          const qid = chip.dataset.qid;
+          document.getElementById(`pool_${qid}`).appendChild(chip);
+          chip.classList.remove("selected-chip");
+          selectedChip = null;
+          return;
+        }
+
+        // Unselect previous
+        if (selectedChip) {
+          selectedChip.classList.remove("selected-chip");
+        }
+
+        selectedChip = chip;
+        chip.classList.add("selected-chip");
+      }
+
+      function handleSlotClick(e) {
+        const slot = e.currentTarget;
+        if (!selectedChip) return;
+
+        if (slot.dataset.qid !== selectedChip.dataset.qid) return;
+
+        // If slot already has a chip, move old chip to pool
+        if (slot.children.length > 0) {
+          const existingChip = slot.children[0];
+          document
+            .getElementById(`pool_${slot.dataset.qid}`)
+            .appendChild(existingChip);
+        }
+
+        slot.appendChild(selectedChip);
+        selectedChip.classList.remove("selected-chip");
+        selectedChip = null;
+      }
+
+      // Grading Engine
       function checkAnswers() {
         let score = 0;
 
         generatedQuestions.forEach((q) => {
           const feedback = document.getElementById(`feedback_${q.id}`);
-          feedback.classList.remove(
-            "hidden",
-            "text-emerald-600",
-            "text-rose-600",
-          );
+          feedback.className = "text-xs font-medium mt-1 p-2 rounded-lg";
 
           if (q.type === "single" || q.type === "tf") {
             const selected = document.querySelector(
@@ -449,10 +648,20 @@
             if (selected && selected.value === q.answer) {
               score++;
               feedback.textContent = "✓ Chính xác!";
-              feedback.classList.add("text-emerald-600");
+              feedback.classList.add(
+                "bg-emerald-50",
+                "text-emerald-700",
+                "border",
+                "border-emerald-200",
+              );
             } else {
-              feedback.textContent = `✗ Chốt án đúng: ${q.answer}`;
-              feedback.classList.add("text-rose-600");
+              feedback.textContent = `✗ Sai rồi! Đáp án đúng: ${q.answer}`;
+              feedback.classList.add(
+                "bg-rose-50",
+                "text-rose-700",
+                "border",
+                "border-rose-200",
+              );
             }
           } else if (q.type === "multiple") {
             const checked = Array.from(
@@ -464,10 +673,20 @@
             if (isCorrect) {
               score++;
               feedback.textContent = "✓ Chính xác!";
-              feedback.classList.add("text-emerald-600");
+              feedback.classList.add(
+                "bg-emerald-50",
+                "text-emerald-700",
+                "border",
+                "border-emerald-200",
+              );
             } else {
               feedback.textContent = `✗ Đáp án đúng gồm: ${q.answers.join(", ")}`;
-              feedback.classList.add("text-rose-600");
+              feedback.classList.add(
+                "bg-rose-50",
+                "text-rose-700",
+                "border",
+                "border-rose-200",
+              );
             }
           } else if (q.type === "essay") {
             const input = document
@@ -475,13 +694,60 @@
               .value.trim();
             if (input.toLowerCase().includes(q.answer.toLowerCase())) {
               score++;
-              feedback.textContent = `✓ Chính xác (Từ khóa đúng: "${q.answer}")`;
-              feedback.classList.add("text-emerald-600");
+              feedback.textContent = `✓ Chính xác! (Từ khóa trong bài: "${q.answer}")`;
+              feedback.classList.add(
+                "bg-emerald-50",
+                "text-emerald-700",
+                "border",
+                "border-emerald-200",
+              );
             } else {
-              feedback.textContent = `i Từ khóa tham khảo trong đáp án: "${q.answer}"`;
-              feedback.classList.add("text-amber-600");
+              feedback.textContent = `i Từ khóa gợi ý: "${q.answer}"`;
+              feedback.classList.add(
+                "bg-amber-50",
+                "text-amber-700",
+                "border",
+                "border-amber-200",
+              );
+            }
+          } else if (q.type === "dragdrop") {
+            const slots = document.querySelectorAll(
+              `.drop-slot[data-qid="${q.id}"]`,
+            );
+            let correctCount = 0;
+
+            slots.forEach((slot, idx) => {
+              const expected = q.answers[idx];
+              const placedChip = slot.children[0];
+              const placedValue = placedChip ? placedChip.dataset.word : null;
+
+              if (placedValue === expected) {
+                correctCount++;
+              }
+            });
+
+            if (correctCount === q.answers.length) {
+              score++;
+              feedback.textContent =
+                "✓ Hoàn hảo! Kéo thả tất cả các vị trí chính xác.";
+              feedback.classList.add(
+                "bg-emerald-50",
+                "text-emerald-700",
+                "border",
+                "border-emerald-200",
+              );
+            } else {
+              feedback.textContent = `✗ Chưa chính xác. Thứ tự đúng các từ là: ${q.answers.join(" → ")}`;
+              feedback.classList.add(
+                "bg-rose-50",
+                "text-rose-700",
+                "border",
+                "border-rose-200",
+              );
             }
           }
+
+          feedback.classList.remove("hidden");
         });
 
         document.getElementById("scoreResult").textContent =
@@ -497,6 +763,7 @@
         rawText.value = "";
         charCount.textContent = "0 ký tự";
         generatedQuestions = [];
+        selectedChip = null;
         renderQuiz();
       }
 
