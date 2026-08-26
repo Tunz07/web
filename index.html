@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Quiz Master - Tạo bài tập tự động</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom Tailwind Configuration -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                50: "#f0f7ff",
+                100: "#e0effe",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(229, 231, 235, 0.8);
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans">
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-slate-200">
+      <div
+        class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="p-2 bg-brand-600 text-white rounded-xl shadow-lg shadow-brand-500/30"
+          >
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg leading-tight">QuizMaker AI</h1>
+            <p class="text-xs text-slate-500">
+              Tạo bài tập thông minh từ văn bản
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button
+            onclick="resetApp()"
+            class="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+          >
+            <i data-lucide="rotate-ccw" class="w-4 h-4 inline mr-1"></i> Làm mới
+          </button>
+          <button
+            onclick="exportQuiz('json')"
+            class="px-3 py-1.5 text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition"
+          >
+            <i data-lucide="download" class="w-4 h-4 inline mr-1"></i> Xuất JSON
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main
+      class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6"
+    >
+      <!-- Left Panel: Input & Control Panel -->
+      <section class="lg:col-span-5 flex flex-col gap-4">
+        <div
+          class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col gap-4"
+        >
+          <div class="flex items-center justify-between">
+            <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+              <i data-lucide="file-text" class="w-5 h-5 text-brand-600"></i> Văn
+              bản nguồn
+            </h2>
+            <span id="charCount" class="text-xs text-slate-400">0 ký tự</span>
+          </div>
+
+          <textarea
+            id="rawText"
+            rows="10"
+            placeholder="Dán văn bản, tài liệu, bài giảng hoặc ghi chú của bạn vào đây..."
+            class="w-full p-3.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition resize-none"
+          ></textarea>
+
+          <!-- Question Configuration Options -->
+          <div class="space-y-3 pt-2">
+            <label
+              class="text-xs font-bold text-slate-500 uppercase tracking-wider"
+              >Cấu hình loại câu hỏi</label
+            >
+
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <label
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="checkbox"
+                  id="typeSingle"
+                  checked
+                  class="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <span>1 Đáp án đúng</span>
+              </label>
+              <label
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="checkbox"
+                  id="typeMultiple"
+                  checked
+                  class="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <span>Nhiều đáp án</span>
+              </label>
+              <label
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="checkbox"
+                  id="typeTF"
+                  checked
+                  class="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <span>Đúng / Sai</span>
+              </label>
+              <label
+                class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50"
+              >
+                <input
+                  type="checkbox"
+                  id="typeEssay"
+                  checked
+                  class="rounded text-brand-600 focus:ring-brand-500"
+                />
+                <span>Tự luận nhập liệu</span>
+              </label>
+            </div>
+          </div>
+
+          <button
+            onclick="generateQuiz()"
+            class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-medium rounded-xl shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-2"
+          >
+            <i data-lucide="wand2" class="w-5 h-5"></i>
+            Tạo bài tập tự động
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Panel: Generated Quiz Preview / Interactive Test -->
+      <section class="lg:col-span-7 flex flex-col gap-4">
+        <div
+          class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 min-h-[500px] flex flex-col"
+        >
+          <div
+            class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4"
+          >
+            <h2 class="font-semibold text-slate-800 flex items-center gap-2">
+              <i data-lucide="check-square" class="w-5 h-5 text-brand-600"></i>
+              Danh sách bài tập
+            </h2>
+            <div
+              id="quizMeta"
+              class="text-xs bg-brand-50 text-brand-700 px-2.5 py-1 rounded-full font-medium hidden"
+            >
+              0 câu hỏi
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div
+            id="emptyState"
+            class="my-auto flex flex-col items-center justify-center text-center p-8"
+          >
+            <div
+              class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-3"
+            >
+              <i data-lucide="brain-circuit" class="w-8 h-8"></i>
+            </div>
+            <h3 class="font-medium text-slate-700 mb-1">Chưa có bài tập nào</h3>
+            <p class="text-xs text-slate-400 max-w-xs">
+              Dán văn bản ở cột bên trái và bấm "Tạo bài tập tự động" để trải
+              nghiệm.
+            </p>
+          </div>
+
+          <!-- Quiz Container -->
+          <div id="quizContainer" class="space-y-6 flex-1 hidden"></div>
+
+          <!-- Bottom Action Bar -->
+          <div
+            id="quizFooter"
+            class="pt-4 border-t border-slate-100 mt-auto hidden flex items-center justify-between"
+          >
+            <button
+              onclick="checkAnswers()"
+              class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-xl shadow-md transition flex items-center gap-2"
+            >
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i> Nộp bài & Nộp
+              kết quả
+            </button>
+            <div
+              id="scoreResult"
+              class="text-sm font-semibold text-slate-700"
+            ></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- JavaScript Engine -->
+    <script>
+      // Initialize Lucide Icons
+      lucide.createIcons();
+
+      const rawText = document.getElementById("rawText");
+      const charCount = document.getElementById("charCount");
+      let generatedQuestions = [];
+
+      // Character Counter
+      rawText.addEventListener("input", () => {
+        charCount.textContent = `${rawText.value.length} ký tự`;
+      });
+
+      // Core Algorithm: Smart Question Generator Engine
+      function generateQuiz() {
+        const text = rawText.value.trim();
+        if (!text) {
+          alert("Tunz ơi, vui lòng dán đoạn văn bản vào trước nhé!");
+          return;
+        }
+
+        // Split text into meaningful sentences
+        const sentences = text
+          .split(/(?<=[.?!])\s+/)
+          .filter((s) => s.trim().length > 15);
+        if (sentences.length === 0) {
+          alert("Văn bản quá ngắn để phân tích. Hãy nhập đoạn văn dài hơn!");
+          return;
+        }
+
+        generatedQuestions = [];
+
+        const allowSingle = document.getElementById("typeSingle").checked;
+        const allowMultiple = document.getElementById("typeMultiple").checked;
+        const allowTF = document.getElementById("typeTF").checked;
+        const allowEssay = document.getElementById("typeEssay").checked;
+
+        const enabledTypes = [];
+        if (allowSingle) enabledTypes.push("single");
+        if (allowMultiple) enabledTypes.push("multiple");
+        if (allowTF) enabledTypes.push("tf");
+        if (allowEssay) enabledTypes.push("essay");
+
+        if (enabledTypes.length === 0) {
+          alert("Vui lòng chọn ít nhất 1 dạng câu hỏi!");
+          return;
+        }
+
+        sentences.forEach((sentence, index) => {
+          const words = sentence.split(/\s+/);
+          if (words.length < 4) return;
+
+          // Pick type sequentially based on user selection
+          const type = enabledTypes[index % enabledTypes.length];
+
+          // Pick a keyword to mask/ask
+          const keyWordIndex = Math.floor(words.length / 2);
+          const targetWord = words[keyWordIndex].replace(/[.,?!]/g, "");
+
+          if (type === "single") {
+            const distractor1 = "khái niệm";
+            const distractor2 = "phương pháp";
+            const distractor3 = "hệ thống";
+
+            generatedQuestions.push({
+              id: index,
+              type: "single",
+              question: sentence.replace(targetWord, "______"),
+              options: shuffleArray([
+                targetWord,
+                distractor1,
+                distractor2,
+                distractor3,
+              ]),
+              answer: targetWord,
+            });
+          } else if (type === "multiple") {
+            generatedQuestions.push({
+              id: index,
+              type: "multiple",
+              question: `Những từ nào sau đây xuất hiện hoặc có liên quan tới nội dung: "${sentence.slice(0, 40)}..."?`,
+              options: shuffleArray([
+                words[0],
+                words[Math.floor(words.length / 2)],
+                "Không liên quan",
+                "Dữ liệu sai",
+              ]),
+              answers: [words[0], words[Math.floor(words.length / 2)]],
+            });
+          } else if (type === "tf") {
+            const isTrue = index % 2 === 0;
+            const questionText = isTrue
+              ? sentence
+              : sentence.replace(targetWord, "không phải " + targetWord);
+            generatedQuestions.push({
+              id: index,
+              type: "tf",
+              question: `Đúng hay Sai: "${questionText}"`,
+              answer: isTrue ? "Đúng" : "Sai",
+            });
+          } else if (type === "essay") {
+            generatedQuestions.push({
+              id: index,
+              type: "essay",
+              question: `Hãy giải thích hoặc điền từ còn thiếu trong ý sau: "${sentence.replace(targetWord, "......")}"`,
+              answer: targetWord,
+            });
+          }
+        });
+
+        renderQuiz();
+      }
+
+      // Render UI Questions
+      function renderQuiz() {
+        const container = document.getElementById("quizContainer");
+        const emptyState = document.getElementById("emptyState");
+        const quizFooter = document.getElementById("quizFooter");
+        const quizMeta = document.getElementById("quizMeta");
+
+        container.innerHTML = "";
+
+        if (generatedQuestions.length === 0) {
+          emptyState.classList.remove("hidden");
+          quizFooter.classList.add("hidden");
+          quizMeta.classList.add("hidden");
+          return;
+        }
+
+        emptyState.classList.add("hidden");
+        quizFooter.classList.remove("hidden");
+        quizMeta.classList.remove("hidden");
+        quizMeta.textContent = `${generatedQuestions.length} câu hỏi`;
+
+        generatedQuestions.forEach((q, idx) => {
+          const card = document.createElement("div");
+          card.className =
+            "p-4 border border-slate-200 rounded-xl bg-slate-50/50 flex flex-col gap-3";
+
+          let badgeText = "";
+          if (q.type === "single") badgeText = "Trắc nghiệm (1 đáp án)";
+          if (q.type === "multiple") badgeText = "Trắc nghiệm (Nhiều đáp án)";
+          if (q.type === "tf") badgeText = "Đúng / Sai";
+          if (q.type === "essay") badgeText = "Tự luận nhập văn bản";
+
+          let bodyHTML = "";
+
+          if (q.type === "single") {
+            bodyHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                        ${q.options
+                          .map(
+                            (opt) => `
+                            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm">
+                                <input type="radio" name="q_${q.id}" value="${opt}" class="text-brand-600 focus:ring-brand-500">
+                                <span>${opt}</span>
+                            </label>
+                        `,
+                          )
+                          .join("")}
+                    </div>`;
+          } else if (q.type === "multiple") {
+            bodyHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                        ${q.options
+                          .map(
+                            (opt) => `
+                            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm">
+                                <input type="checkbox" name="q_${q.id}" value="${opt}" class="rounded text-brand-600 focus:ring-brand-500">
+                                <span>${opt}</span>
+                            </label>
+                        `,
+                          )
+                          .join("")}
+                    </div>`;
+          } else if (q.type === "tf") {
+            bodyHTML = `<div class="flex gap-3 mt-1">
+                        ${["Đúng", "Sai"]
+                          .map(
+                            (opt) => `
+                            <label class="flex-1 flex items-center justify-center gap-2 p-2.5 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 text-sm font-medium">
+                                <input type="radio" name="q_${q.id}" value="${opt}" class="text-brand-600 focus:ring-brand-500">
+                                <span>${opt}</span>
+                            </label>
+                        `,
+                          )
+                          .join("")}
+                    </div>`;
+          } else if (q.type === "essay") {
+            bodyHTML = `<div class="mt-1">
+                        <textarea name="q_${q.id}" rows="2" placeholder="Nhập câu trả lời của bạn từ bàn phím..." 
+                            class="w-full p-3 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"></textarea>
+                    </div>`;
+          }
+
+          card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <span class="text-xs font-semibold text-brand-700 bg-brand-100 px-2 py-0.5 rounded-md">Câu ${idx + 1} • ${badgeText}</span>
+                    </div>
+                    <p class="text-sm font-medium text-slate-800">${q.question}</p>
+                    ${bodyHTML}
+                    <div id="feedback_${q.id}" class="text-xs mt-1 hidden"></div>
+                `;
+
+          container.appendChild(card);
+        });
+
+        lucide.createIcons();
+      }
+
+      // Grading Logic
+      function checkAnswers() {
+        let score = 0;
+
+        generatedQuestions.forEach((q) => {
+          const feedback = document.getElementById(`feedback_${q.id}`);
+          feedback.classList.remove(
+            "hidden",
+            "text-emerald-600",
+            "text-rose-600",
+          );
+
+          if (q.type === "single" || q.type === "tf") {
+            const selected = document.querySelector(
+              `input[name="q_${q.id}"]:checked`,
+            );
+            if (selected && selected.value === q.answer) {
+              score++;
+              feedback.textContent = "✓ Chính xác!";
+              feedback.classList.add("text-emerald-600");
+            } else {
+              feedback.textContent = `✗ Chốt án đúng: ${q.answer}`;
+              feedback.classList.add("text-rose-600");
+            }
+          } else if (q.type === "multiple") {
+            const checked = Array.from(
+              document.querySelectorAll(`input[name="q_${q.id}"]:checked`),
+            ).map((c) => c.value);
+            const isCorrect =
+              JSON.stringify(checked.sort()) ===
+              JSON.stringify(q.answers.sort());
+            if (isCorrect) {
+              score++;
+              feedback.textContent = "✓ Chính xác!";
+              feedback.classList.add("text-emerald-600");
+            } else {
+              feedback.textContent = `✗ Đáp án đúng gồm: ${q.answers.join(", ")}`;
+              feedback.classList.add("text-rose-600");
+            }
+          } else if (q.type === "essay") {
+            const input = document
+              .querySelector(`textarea[name="q_${q.id}"]`)
+              .value.trim();
+            if (input.toLowerCase().includes(q.answer.toLowerCase())) {
+              score++;
+              feedback.textContent = `✓ Chính xác (Từ khóa đúng: "${q.answer}")`;
+              feedback.classList.add("text-emerald-600");
+            } else {
+              feedback.textContent = `i Từ khóa tham khảo trong đáp án: "${q.answer}"`;
+              feedback.classList.add("text-amber-600");
+            }
+          }
+        });
+
+        document.getElementById("scoreResult").textContent =
+          `Kết quả: ${score} / ${generatedQuestions.length} câu đúng`;
+      }
+
+      // Helper: Utility Functions
+      function shuffleArray(array) {
+        return array.sort(() => Math.random() - 0.5);
+      }
+
+      function resetApp() {
+        rawText.value = "";
+        charCount.textContent = "0 ký tự";
+        generatedQuestions = [];
+        renderQuiz();
+      }
+
+      function exportQuiz(format) {
+        if (generatedQuestions.length === 0) {
+          alert("Chưa có dữ liệu bài tập để xuất!");
+          return;
+        }
+        const dataStr =
+          "data:text/json;charset=utf-8," +
+          encodeURIComponent(JSON.stringify(generatedQuestions, null, 2));
+        const downloadAnchor = document.createElement("a");
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "quiz-data.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      }
+    </script>
+  </body>
+</html>
